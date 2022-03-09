@@ -16,6 +16,8 @@ import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.security.Principal;
 
+
+
 @PreAuthorize("isAuthenticated()")
 @RestController
 public class UserController {
@@ -28,7 +30,7 @@ public class UserController {
         this.jdbcUserDao = jdbcUserDao;
     }
 
-
+    //Get User Balance
     @RequestMapping(path = "/account", method = RequestMethod.GET)
     public BigDecimal get(Principal principal) {
         String userName = principal.getName();
