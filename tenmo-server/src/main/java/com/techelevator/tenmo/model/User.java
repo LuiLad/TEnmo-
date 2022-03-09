@@ -1,8 +1,11 @@
 package com.techelevator.tenmo.model;
 
+import com.techelevator.tenmo.dao.JdbcUserDao;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
 
 public class User {
 
@@ -12,6 +15,10 @@ public class User {
    private boolean activated;
    private Set<Authority> authorities = new HashSet<>();
 
+   private Account userAcct;
+
+
+
    public User() { }
 
    public User(Long id, String username, String password, String authorities) {
@@ -19,6 +26,7 @@ public class User {
       this.username = username;
       this.password = password;
       this.activated = true;
+
    }
 
    public Long getId() {
@@ -66,6 +74,14 @@ public class User {
       for(String role : roles) {
          this.authorities.add(new Authority("ROLE_" + role));
       }
+   }
+
+   public Account getUserAcct() {
+      return userAcct;
+   }
+
+   public void setUserAcct(Account userAcct) {
+      this.userAcct = userAcct;
    }
 
    @Override

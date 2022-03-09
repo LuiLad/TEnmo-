@@ -1,5 +1,7 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -86,6 +88,61 @@ public class JdbcUserDao implements UserDao {
         return balance;
     }
 
+    @Override
+    public Transfer transfer(Transfer transfer) {
+        String sql = "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_to, account_from, amount) VALUES (?,?,?,?,?) RETURNING transfer_id;";
+        Boolean success = false;
+        int transferID = 0;
+        Transfer insertedTransfer = null;
+
+//TODO: Need to log errors for negative numbers and stuff
+        if (transfer.getAcctFrom() != transfer.getAcctTo() && BigDecimal.valueOf(0).compareTo(transfer.getAmount()) < 0) {
+           //Balance must be greater than transfer amount
+            if (getAccount(transfer.getAcctFrom()).getBalance().compareTo(transfer.getAmount()) > 0) {
+               try{
+                    transferID = jdbcTemplate.queryForObject(sql,Integer.class,
+                            transfer.getType(),
+                            transfer.getStatus(),
+                            getAccount(transfer.getAcctTo()).getAcct_id(),
+                            getAccount(transfer.getAcctFrom()).getAcct_id(),
+                            transfer.getAmount());
+                   success = true;
+               } catch (Exception e){
+                   System.out.println("There Was An Error :(");
+               }
+            }
+    }
+        if(success){
+            sql = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_to, account_from, amount FROM transfer WHERE transfer_id = ?";
+            SqlRowSet result = jdbcTemplate.queryForRowSet(sql,transferID);
+            if(result.next()){
+                insertedTransfer = mapRowToTransfer(result);
+            }
+
+        }
+
+        return insertedTransfer;
+    }
+
+//    @Override
+//    public boolean postTransfer(Transfer transfer) {
+//
+//
+//        return false;
+//    }
+
+    public Account getAccount(int acctId){
+        String sql = "select account_id, user_id, balance from account WHERE account_id = ?;";
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, acctId);
+        if (rowSet.next()){
+            return mapRowToAccount(rowSet);
+        }
+        throw new UsernameNotFoundException("Account " + acctId + " was not found.");
+    }
+
+
+
+    //Mappings!!!!
     private User mapRowToUser(SqlRowSet rs) {
         User user = new User();
         user.setId(rs.getLong("user_id"));
@@ -95,4 +152,27 @@ public class JdbcUserDao implements UserDao {
         user.setAuthorities("USER");
         return user;
     }
+
+
+
+    private Account mapRowToAccount(SqlRowSet rs) {
+        Account account = new Account();
+        account.setAcct_id(rs.getInt("account_id"));
+        account.setUserId(rs.getInt("user_id"));
+        account.setBalance(rs.getBigDecimal("balance"));
+        return account;
+    }
+
+    private Transfer mapRowToTransfer(SqlRowSet rs) {
+        Transfer transfer = new Transfer();
+        transfer.setId(rs.getInt("transfer_id"));
+        transfer.setType(rs.getInt("transfer_type_id"));
+        transfer.setStatus(rs.getInt("transfer_status_id"));
+        transfer.setAcctFrom(rs.getInt("account_to"));
+        transfer.setAcctTo(rs.getInt("account_from"));
+        transfer.setAmount(rs.getBigDecimal("amount"));
+        return transfer;
+    }
+
+
 }
