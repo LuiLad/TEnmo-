@@ -44,7 +44,7 @@ public class UserController {
     }
 
     //Get List of Users (Make sure User has ID and name)
-    @RequestMapping(path = "/accounts", method = RequestMethod.GET)
+    @RequestMapping(path = "/user", method = RequestMethod.GET)
     public List<User> allUsers() {
         List<User> userList = jdbcUserDao.findAll();
         return userList;
@@ -55,7 +55,9 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/transfer", method = RequestMethod.POST)
     public Transfer addTransfer(@Valid @RequestBody Transfer transfer){
-        return jdbcUserDao.transfer(transfer);
+        Transfer transferBalance = jdbcUserDao.transfer(transfer);
+        jdbcUserDao.balanceTransfer(transferBalance);
+        return transferBalance;
 
     //TODO: Need to also change user account balances. Only Created transfers so far.
 

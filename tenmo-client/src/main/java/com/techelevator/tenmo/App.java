@@ -105,8 +105,18 @@ public class App {
 	}
 
 	private void sendBucks() {
-		// TODO Auto-generated method stub
-		
+        int idSelection = -1;
+        while (idSelection != 0) {
+            accountService.listUsers();
+            idSelection = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
+
+
+
+            } else {
+                System.out.println("Invalid Selection");
+            }
+            consoleService.pause();
+
 	}
 
 	private void requestBucks() {
