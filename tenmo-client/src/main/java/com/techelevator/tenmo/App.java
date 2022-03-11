@@ -1,7 +1,6 @@
 package com.techelevator.tenmo;
 
-import com.techelevator.tenmo.model.AuthenticatedUser;
-import com.techelevator.tenmo.model.UserCredentials;
+import com.techelevator.tenmo.model.*;
 import com.techelevator.tenmo.services.AccountService;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
@@ -94,10 +93,7 @@ public class App {
         accountService.getCurrentBalance();
 	}
 
-	private void viewTransferHistory() {
-		// TODO Auto-generated method stub
-		
-	}
+	private void viewTransferHistory() {accountService.getTransferHistory();}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
@@ -106,18 +102,22 @@ public class App {
 
 	private void sendBucks() {
         int idSelection = -1;
+        int fromUserId = Math.toIntExact((currentUser.getUser().getId()));
+        Account fromUserAcct = accountService.getAccount(fromUserId);
+
         while (idSelection != 0) {
-            accountService.listUsers();
+            User[] users = accountService.listUsers();
             idSelection = consoleService.promptForInt("Enter ID of user you are sending to (0 to cancel): ");
-
-
-
-            } else {
-                System.out.println("Invalid Selection");
+            for (User user : users) {
+                if (user.getId() == idSelection) {
+                    Account toUserAcct = accountService.getAccount(idSelection);
+                    BigDecimal requestAmt = consoleService.promptForBigDecimal("Enter Amount: ");
+                    Transfer newTransfer = new Transfer(2,2,fromUserAcct.getAcct_id(),toUserAcct.getAcct_id(),requestAmt);
+                    accountService.sendTransfer(newTransfer);
+                }
             }
-            consoleService.pause();
-
-	}
+        } consoleService.pause();
+    }
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub

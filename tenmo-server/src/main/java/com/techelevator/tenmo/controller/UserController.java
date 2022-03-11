@@ -3,6 +3,7 @@ package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.JdbcUserDao;
 import com.techelevator.tenmo.dao.UserDao;
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.LoginDTO;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
@@ -33,14 +34,43 @@ public class UserController {
         this.jdbcUserDao = jdbcUserDao;
     }
 
+    //Get User By AcctNumber
+    @RequestMapping(path = "/user/{acctid}", method = RequestMethod.GET)
+    public String getUserByAcctId( @PathVariable int acctid) {
+        return jdbcUserDao.findUsernameByAcctId(acctid);
+    }
+
+
     //Get User Balance
-    @RequestMapping(path = "/account", method = RequestMethod.GET)
+    @RequestMapping(path = "/accountbal", method = RequestMethod.GET)
     public BigDecimal get(Principal principal) {
         String userName = principal.getName();
         int userID = jdbcUserDao.findIdByUsername(userName);
         BigDecimal balance = jdbcUserDao.currentBalance(userID);
 
         return balance;
+    }
+
+    //Get Account of User Logged In
+    @RequestMapping(path = "/account", method = RequestMethod.GET)
+    public Account getAccount(Principal principal) {
+        String userName = principal.getName();
+        int userID = jdbcUserDao.findIdByUsername(userName);
+        Account account = jdbcUserDao.getAccount(userID);
+
+        return account;
+    }
+
+    //Get Account of User By User Id
+    @RequestMapping(path = "/accountUser/{id}", method = RequestMethod.GET)
+    public Account getAccountIdByUser(@PathVariable int id) {
+        return jdbcUserDao.getAccount(id);
+    }
+
+    //Get Account of User By Acct Id
+    @RequestMapping(path = "/account/{id}", method = RequestMethod.GET)
+    public Account getAccountId(@PathVariable int id) {
+        return jdbcUserDao.getAccountByAcctId(id);
     }
 
     //Get List of Users (Make sure User has ID and name)
@@ -51,17 +81,24 @@ public class UserController {
     }
 
 
-
+    //Transfer between accounts
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/transfer", method = RequestMethod.POST)
-    public Transfer addTransfer(@Valid @RequestBody Transfer transfer){
-        Transfer transferBalance = jdbcUserDao.transfer(transfer);
-        jdbcUserDao.balanceTransfer(transferBalance);
-        return transferBalance;
-
-    //TODO: Need to also change user account balances. Only Created transfers so far.
-
+    public Transfer addTransfer(@Valid @RequestBody Transfer transfer)  {
+        Transfer transfered = jdbcUserDao.transfer(transfer);
+        jdbcUserDao.balanceTransfer(transfered);
+        return transfered;
     }
+
+
+    @RequestMapping(path = "/transfer", method = RequestMethod.GET)
+    public List<Transfer> getTransfers(Principal principal)  {
+        String userName = principal.getName();
+        int userId = jdbcUserDao.findIdByUsername(userName);
+        return jdbcUserDao.getTransfers(userId);
+    }
+
+
 
 
 

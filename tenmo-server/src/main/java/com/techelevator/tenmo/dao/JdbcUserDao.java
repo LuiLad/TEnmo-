@@ -35,6 +35,17 @@ public class JdbcUserDao implements UserDao {
         }
     }
 
+
+    public String findUsernameByAcctId(int acctId) {
+        String sql = "SELECT u.username FROM account a Left Join tenmo_user u ON u.user_id = a.user_id WHERE a.user_id = ?;";
+        String username = jdbcTemplate.queryForObject(sql, String.class, acctId);
+        if (username != null) {
+            return username;
+        } else {
+            return "NotFound";
+        }
+    }
+
     @Override
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
@@ -88,29 +99,32 @@ public class JdbcUserDao implements UserDao {
         return balance;
     }
 
+
+
+    //Transfers
+
     @Override
     public Transfer transfer(Transfer transfer) {
         String sql = "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_to, account_from, amount) VALUES (?,?,?,?,?) RETURNING transfer_id;";
         Boolean success = false;
         int transferID = 0;
         Transfer insertedTransfer = null;
+        int type = transfer.getType();
+        int status = transfer.getStatus();
+        int toAcct = transfer.getAcctTo();
+        int fromAcct = transfer.getAcctFrom();
+        BigDecimal amount = transfer.getAmount();
 
-//TODO: Need to log errors for negative numbers and stuff
         if (transfer.getAcctFrom() != transfer.getAcctTo()) {
             if (BigDecimal.valueOf(0).compareTo(transfer.getAmount()) < 0) {
 
                 //Balance must be greater than transfer amount
-                if (getAccount(transfer.getAcctFrom()).getBalance().compareTo(transfer.getAmount()) > 0) {
+                if (getAccountByAcctId(transfer.getAcctFrom()).getBalance().compareTo(transfer.getAmount()) > 0) {
                     try {
-                        transferID = jdbcTemplate.queryForObject(sql, Integer.class,
-                                transfer.getType(),
-                                transfer.getStatus(),
-                                getAccount(transfer.getAcctTo()).getAcct_id(),
-                                getAccount(transfer.getAcctFrom()).getAcct_id(),
-                                transfer.getAmount());
+                         transferID = jdbcTemplate.queryForObject(sql, Integer.class, type,status,toAcct,fromAcct,amount);
                         success = true;
                     } catch (Exception e) {
-                        System.out.println("There Was An Error :(");
+                        System.out.println("There Was An Error In TryCatch Block On Line 105 :(");
 
                         //TODO: Throw exceptions
                     } //throw
@@ -137,7 +151,7 @@ public class JdbcUserDao implements UserDao {
         } catch (DataAccessException e) {
             return false;
         }
-        // create account
+
         sql = "UPDATE account SET balance = balance + ? " +
                 "WHERE account_id = ?;";
         try {
@@ -149,13 +163,48 @@ public class JdbcUserDao implements UserDao {
     }
 
 
-    public Account getAccount(int acctId) {
+    public List<Transfer> getTransfers(int userId){
+        List<Transfer> transfers = new ArrayList<>();
+        String sql = "SELECT transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
+                "FROM transfer \n" +
+                "LEFT JOIN account ON account.account_id = transfer.account_from\n" +
+                "LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
+                "WHERE \n" +
+                "account.user_id = ?\n" +
+                "\n" +
+                "union all\n" +
+                "\n" +
+                "SELECT transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
+                "FROM transfer \n" +
+                "LEFT JOIN account ON account.account_id = transfer.account_to\n" +
+                "LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
+                "WHERE \n" +
+                "account.user_id = ?;";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId, userId);
+        while (results.next()) {
+            Transfer transfer = mapRowToTransfer(results);
+            transfers.add(transfer);
+        }
+        return transfers;
+    }
+
+
+    public Account getAccount(int userId) {
+        String sql = "select account_id, user_id, balance from account WHERE user_id = ?;";
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, userId);
+        if (rowSet.next()) {
+            return mapRowToAccount(rowSet);
+        }
+        throw new UsernameNotFoundException("User " + userId + " was not found.");
+    }
+
+    public Account getAccountByAcctId(int acctId) {
         String sql = "select account_id, user_id, balance from account WHERE account_id = ?;";
         SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, acctId);
         if (rowSet.next()) {
             return mapRowToAccount(rowSet);
         }
-        throw new UsernameNotFoundException("Account " + acctId + " was not found.");
+        throw new UsernameNotFoundException("Account " + acctId + " was not found by acct ID.");
     }
 
 

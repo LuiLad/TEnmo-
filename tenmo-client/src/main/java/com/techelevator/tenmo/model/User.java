@@ -1,9 +1,14 @@
 package com.techelevator.tenmo.model;
 
+import com.techelevator.tenmo.services.AccountService;
+
 public class User {
 
     private Long id;
     private String username;
+    private AccountService accountService;
+
+    //TODO: Add account object and getters/setters
 
     public Long getId() {
         return id;
