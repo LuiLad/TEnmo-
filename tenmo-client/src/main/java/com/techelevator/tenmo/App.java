@@ -93,7 +93,11 @@ public class App {
         accountService.getCurrentBalance();
 	}
 
-	private void viewTransferHistory() {accountService.getTransferHistory();}
+	private void viewTransferHistory() {
+        //TODO: Need to allow for getting details of transfer. Can copy sendBucks.
+        Transfer[] transferHistory = accountService.getTransferHistory();
+
+    }
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub

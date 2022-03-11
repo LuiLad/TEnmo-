@@ -35,9 +35,9 @@ public class UserController {
     }
 
     //Get User By AcctNumber
-    @RequestMapping(path = "/user/{acctid}", method = RequestMethod.GET)
-    public String getUserByAcctId( @PathVariable int acctid) {
-        return jdbcUserDao.findUsernameByAcctId(acctid);
+    @RequestMapping(path = "/user/{id}", method = RequestMethod.GET)
+    public String getUserByAcctId( @PathVariable int id) {
+        return jdbcUserDao.findUsernameByAcctId(id);
     }
 
 

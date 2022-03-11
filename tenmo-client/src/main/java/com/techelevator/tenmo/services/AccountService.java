@@ -56,7 +56,7 @@ public class AccountService {
 //        }
 //    }
 
-    public void getTransferHistory() {
+    public Transfer[] getTransferHistory() {
         try {
             ResponseEntity<Transfer[]> response = restTemplate.exchange(API_BASE_URL + "transfer", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
             Transfer[] transferArray = response.getBody();
@@ -74,9 +74,10 @@ public class AccountService {
                 System.out.printf("%-10s %-10s %-10f \n", transferArray[i].getId(),toFrom,transferArray[i].getAmount());
             }
             System.out.println("---------------------------------------------------------------------------------------");
-
+            return transferArray;
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
+            return null;
         }
     }
 

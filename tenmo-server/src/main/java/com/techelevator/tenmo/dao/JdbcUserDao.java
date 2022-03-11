@@ -37,7 +37,7 @@ public class JdbcUserDao implements UserDao {
 
 
     public String findUsernameByAcctId(int acctId) {
-        String sql = "SELECT u.username FROM account a Left Join tenmo_user u ON u.user_id = a.user_id WHERE a.user_id = ?;";
+        String sql = "SELECT u.username FROM account a Left Join tenmo_user u ON u.user_id = a.user_id WHERE a.account_id = ?;";
         String username = jdbcTemplate.queryForObject(sql, String.class, acctId);
         if (username != null) {
             return username;
@@ -165,21 +165,21 @@ public class JdbcUserDao implements UserDao {
 
     public List<Transfer> getTransfers(int userId){
         List<Transfer> transfers = new ArrayList<>();
-        String sql = "SELECT transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
-                "FROM transfer \n" +
-                "LEFT JOIN account ON account.account_id = transfer.account_from\n" +
-                "LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
-                "WHERE \n" +
-                "account.user_id = ?\n" +
-                "\n" +
-                "union all\n" +
-                "\n" +
-                "SELECT transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
-                "FROM transfer \n" +
-                "LEFT JOIN account ON account.account_id = transfer.account_to\n" +
-                "LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
-                "WHERE \n" +
-                "account.user_id = ?;";
+        String sql = " (SELECT transfer_id, transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
+                " FROM transfer \n" +
+                " LEFT JOIN account ON account.account_id = transfer.account_from\n" +
+                " LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
+                " WHERE \n" +
+                " account.user_id = ?)\n" +
+                " \n" +
+                " union all\n" +
+                " \n" +
+                " (SELECT transfer_id, transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
+                " FROM transfer \n" +
+                " LEFT JOIN account ON account.account_id = transfer.account_to\n" +
+                " LEFT JOIN tenmo_user ON tenmo_user.user_id = account.user_id\n" +
+                " WHERE \n" +
+                " account.user_id = ?);";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId, userId);
         while (results.next()) {
             Transfer transfer = mapRowToTransfer(results);
