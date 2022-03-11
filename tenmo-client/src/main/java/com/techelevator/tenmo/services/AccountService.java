@@ -65,7 +65,7 @@ public class AccountService {
             System.out.format("%-10s \n","Transfers");
             System.out.format("%-10s %-10s %-10s \n", "ID", "From/To","Amount");
             for (int i = 0; i < transferArray.length; i++) {
-                if(transferArray[i].getAcctFrom() == currentUser.getUser().getId()){
+                if(transferArray[i].getAcctFrom() == getAccount(Math.toIntExact((currentUser.getUser().getId()))).getAcct_id() ){
                     toFrom = "From: " + getUsername(transferArray[i].getAcctTo());
                 } else {
                     toFrom = "To:   " + getUsername(transferArray[i].getAcctFrom());
