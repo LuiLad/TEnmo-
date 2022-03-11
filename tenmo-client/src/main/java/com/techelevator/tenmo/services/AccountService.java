@@ -148,14 +148,10 @@ public class AccountService {
     }
     //TODO: Should add transfer status and type strings to transfer model
     public void printTransactionDetails(Transfer transfer) {
-        String type = "";
-        String status = "";
-        if (transfer.getType() == 2) {
-            type = "Send";
-        }
-        if (transfer.getStatus() == 2) {
-            status = "Approved";
-        }
+        String[] types = new String[] {"Request","Send"};
+        String[] statuses = new String[] {"Pending","Approved","Rejected"};
+        String type = types[transfer.getType()-1];
+        String status = statuses[transfer.getStatus()-1];
 
         System.out.println("---------------------------------------------------------------------------------------");
         System.out.format("%-10s \n", "Transfer Details");

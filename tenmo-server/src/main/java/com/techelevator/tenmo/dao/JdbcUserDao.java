@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
+//TODO: Think about renaming methods
 @Component
 public class JdbcUserDao implements UserDao {
 
@@ -103,6 +103,7 @@ public class JdbcUserDao implements UserDao {
 
     //Transfers
 
+    //TODO: Break Up Code For Readability And Testability
     @Override
     public Transfer transfer(Transfer transfer) {
         String sql = "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_to, account_from, amount) VALUES (?,?,?,?,?) RETURNING transfer_id;";
@@ -117,7 +118,6 @@ public class JdbcUserDao implements UserDao {
 
         if (transfer.getAcctFrom() != transfer.getAcctTo()) {
             if (BigDecimal.valueOf(0).compareTo(transfer.getAmount()) < 0) {
-
                 //Balance must be greater than transfer amount
                 if (getAccountByAcctId(transfer.getAcctFrom()).getBalance().compareTo(transfer.getAmount()) > 0) {
                     try {

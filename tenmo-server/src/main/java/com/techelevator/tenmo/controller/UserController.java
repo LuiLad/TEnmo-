@@ -101,19 +101,4 @@ public class UserController {
 
 
 
-
-
-    //Send TE Bucks to User
-        //CANNOT send money to yourself
-        //CANNOT send more than you have
-        //CANNOT send negative or zero TE Bucks
-        //Sender Account Decreased
-        //Receiver Account Increased
-        //Transfer has initial status of approved
-
-
-
-
-
-
 }
