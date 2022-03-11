@@ -1,5 +1,8 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.exception.NotEnoughFundsException;
+import com.techelevator.tenmo.exception.TransferAmountInvalidException;
+import com.techelevator.tenmo.exception.TransferToSelfException;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 
@@ -18,7 +21,7 @@ public interface UserDao {
 
     BigDecimal currentBalance(int userID);
 
-    Transfer transfer(Transfer transfer);
+    Transfer transfer(Transfer transfer) throws TransferToSelfException, TransferAmountInvalidException, NotEnoughFundsException;
 
  //  boolean postTransfer(Transfer transfer);
 

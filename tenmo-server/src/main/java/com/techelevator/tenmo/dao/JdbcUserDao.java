@@ -1,5 +1,8 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.exception.NotEnoughFundsException;
+import com.techelevator.tenmo.exception.TransferAmountInvalidException;
+import com.techelevator.tenmo.exception.TransferToSelfException;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
 //TODO: Think about renaming methods
 @Component
 public class JdbcUserDao implements UserDao {
@@ -95,19 +99,14 @@ public class JdbcUserDao implements UserDao {
     @Override
     public BigDecimal currentBalance(int userID) {
         String sql = "SELECT balance FROM account WHERE user_id = ?; ";
-        BigDecimal balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, userID);
-        return balance;
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class, userID);
     }
 
 
-
-    //Transfers
-
-    //TODO: Break Up Code For Readability And Testability
     @Override
-    public Transfer transfer(Transfer transfer) {
+    public Transfer transfer(Transfer transfer) throws TransferToSelfException, TransferAmountInvalidException, NotEnoughFundsException {
         String sql = "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_to, account_from, amount) VALUES (?,?,?,?,?) RETURNING transfer_id;";
-        Boolean success = false;
+        boolean success = false;
         int transferID = 0;
         Transfer insertedTransfer = null;
         int type = transfer.getType();
@@ -121,15 +120,19 @@ public class JdbcUserDao implements UserDao {
                 //Balance must be greater than transfer amount
                 if (getAccountByAcctId(transfer.getAcctFrom()).getBalance().compareTo(transfer.getAmount()) > 0) {
                     try {
-                         transferID = jdbcTemplate.queryForObject(sql, Integer.class, type,status,toAcct,fromAcct,amount);
+                        transferID = jdbcTemplate.queryForObject(sql, Integer.class, type, status, toAcct, fromAcct, amount);
                         success = true;
-                    } catch (Exception e) {
+                    } catch (NullPointerException e) {
                         System.out.println("There Was An Error In TryCatch Block On Line 105 :(");
-
-                        //TODO: Throw exceptions
-                    } //throw
-                } //throw
+                    }
+                } else {
+                    throw new NotEnoughFundsException();
+                }
+            } else {
+                throw new TransferAmountInvalidException();
             }
+        } else {
+            throw new TransferToSelfException();
         }
         if (success) {
             sql = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_to, account_from, amount FROM transfer WHERE transfer_id = ?";
@@ -163,7 +166,7 @@ public class JdbcUserDao implements UserDao {
     }
 
 
-    public List<Transfer> getTransfers(int userId){
+    public List<Transfer> getTransfers(int userId) {
         List<Transfer> transfers = new ArrayList<>();
         String sql = " (SELECT transfer_id, transfer_type_id, transfer_status_id, account_to, account_from, amount \n" +
                 " FROM transfer \n" +
@@ -189,7 +192,7 @@ public class JdbcUserDao implements UserDao {
     }
 
 
-    public Account getAccount(int userId) {
+    public Account getAccountByUserId(int userId) {
         String sql = "select account_id, user_id, balance from account WHERE user_id = ?;";
         SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, userId);
         if (rowSet.next()) {

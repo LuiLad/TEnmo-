@@ -21,7 +21,17 @@ public class Transfer {
 
     //Constructor
 
+    public Transfer() {
+    }
 
+    public Transfer(int id, int type, int status, int acctFrom, int acctTo, BigDecimal amount) {
+        this.id = id;
+        this.type = type;
+        this.status = status;
+        this.acctFrom = acctFrom;
+        this.acctTo = acctTo;
+        this.amount = amount;
+    }
     //Getters & Setters
 
 
