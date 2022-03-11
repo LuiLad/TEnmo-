@@ -17,6 +17,7 @@ public class Transfer {
     @JsonProperty("account_to")
     private int acctTo;
     private BigDecimal amount;
+    
 
     //Constructor
 

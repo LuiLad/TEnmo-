@@ -230,12 +230,15 @@ public class JdbcUserDao implements UserDao {
 
     private Transfer mapRowToTransfer(SqlRowSet rs) {
         Transfer transfer = new Transfer();
+
         transfer.setId(rs.getInt("transfer_id"));
         transfer.setType(rs.getInt("transfer_type_id"));
         transfer.setStatus(rs.getInt("transfer_status_id"));
         transfer.setAcctFrom(rs.getInt("account_to"));
         transfer.setAcctTo(rs.getInt("account_from"));
         transfer.setAmount(rs.getBigDecimal("amount"));
+
+
         return transfer;
     }
 

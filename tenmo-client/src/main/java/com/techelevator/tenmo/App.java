@@ -94,8 +94,19 @@ public class App {
 	}
 
 	private void viewTransferHistory() {
-        //TODO: Need to allow for getting details of transfer. Can copy sendBucks.
-        Transfer[] transferHistory = accountService.getTransferHistory();
+
+
+        int idSelection = -1;
+        while (idSelection != 0) {
+            Transfer[] transferHistory = accountService.getTransferHistory();
+            idSelection = consoleService.promptForInt("Select transfer ID for details (0 to cancel): ");
+            for(Transfer transfer: transferHistory){
+                if(transfer.getId() == idSelection){
+                    accountService.printTransactionDetails(transfer);
+                }
+            }
+            consoleService.pause();
+        }
 
     }
 

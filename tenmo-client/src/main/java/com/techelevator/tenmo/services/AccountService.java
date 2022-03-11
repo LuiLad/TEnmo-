@@ -42,20 +42,6 @@ public class AccountService {
     }
 
 
-
-//TODO: Need to make method to get list of transfers
-
-//    public Account getTransferList(){
-//        try {
-//            ResponseEntity<BigDecimal> response = restTemplate.exchange(API_BASE_URL + "account", HttpMethod.GET, makeAuthEntity(), Account.class);
-//            Account account = response.getBody();
-//            return account;
-//        } catch (RestClientResponseException | ResourceAccessException e) {
-//            BasicLogger.log(e.getMessage());
-//            return null;
-//        }
-//    }
-
     public Transfer[] getTransferHistory() {
         try {
             ResponseEntity<Transfer[]> response = restTemplate.exchange(API_BASE_URL + "transfer", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
@@ -71,7 +57,7 @@ public class AccountService {
                     toFrom = "To:   " + getUsername(transferArray[i].getAcctFrom());
 
                 }
-                System.out.printf("%-10s %-10s %-10f \n", transferArray[i].getId(),toFrom,transferArray[i].getAmount());
+                System.out.printf("%-10s %-10s $%-10.2f \n", transferArray[i].getId(),toFrom,transferArray[i].getAmount());
             }
             System.out.println("---------------------------------------------------------------------------------------");
             return transferArray;
@@ -126,7 +112,7 @@ public class AccountService {
         }
     }
 
-    //TODO: Build Transfer Call
+
 
     public Transfer sendTransfer(Transfer transfer) {
 
@@ -160,7 +146,29 @@ public class AccountService {
         return new HttpEntity<>(transfer, headers);
 
     }
+    //TODO: Should add transfer status and type strings to transfer model
+    public void printTransactionDetails(Transfer transfer) {
+        String type = "";
+        String status = "";
+        if (transfer.getType() == 2) {
+            type = "Send";
+        }
+        if (transfer.getStatus() == 2) {
+            status = "Approved";
+        }
 
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.format("%-10s \n", "Transfer Details");
+        System.out.println("---------------------------------------------------------------------------------------");
+        System.out.format("Id: %-10s\nFrom: %-10s\nTo: %-10s\nType: %-10s\nStatus: %-10s\nAmount: $%-10s\n",
+                transfer.getId(),
+                getUsername(transfer.getAcctFrom()),
+                getUsername(transfer.getAcctTo()),
+                type,
+                status,
+                transfer.getAmount());
+        System.out.println("---------------------------------------------------------------------------------------");
+    }
 
 
 
