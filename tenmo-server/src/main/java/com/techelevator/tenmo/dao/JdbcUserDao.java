@@ -146,6 +146,18 @@ public class JdbcUserDao implements UserDao {
         return insertedTransfer;
     }
 
+    @Override
+    public boolean updateTransfer(Transfer transfer) {
+        String sql = "UPDATE transfer SET transfer_status_id = ? WHERE transfer_id = ?; ";
+        try {
+            jdbcTemplate.update(sql, transfer.getStatus(), transfer.getId());
+            return true;
+        } catch (DataAccessException e) {
+            return false;
+        }
+
+    }
+
     public boolean balanceTransfer(Transfer transfer) {
         String sql = "UPDATE account SET balance = balance - ? " +
                 "WHERE account_id = ?;";

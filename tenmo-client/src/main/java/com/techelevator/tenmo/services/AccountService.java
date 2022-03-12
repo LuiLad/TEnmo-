@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AccountService {
@@ -22,7 +23,7 @@ public class AccountService {
     public AccountService() {
     }
 
-    public AccountService(String userId){
+    public AccountService(String userId) {
     }
 
     public void setCurrentUser(AuthenticatedUser currentUser) {
@@ -30,7 +31,7 @@ public class AccountService {
     }
 
 
-    public Account getAccount(int userID){
+    public Account getAccount(int userID) {
         try {
             ResponseEntity<Account> response = restTemplate.exchange(API_BASE_URL + "accountUser/" + userID, HttpMethod.GET, makeAuthEntity(), Account.class);
             Account account = response.getBody();
@@ -42,25 +43,45 @@ public class AccountService {
     }
 
 
-    public Transfer[] getTransferHistory() {
+    public List<Transfer> listTransfers(int status) {
         try {
             ResponseEntity<Transfer[]> response = restTemplate.exchange(API_BASE_URL + "transfer", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
             Transfer[] transferArray = response.getBody();
+            List<Transfer> selectedTransfers = new ArrayList<>();
+
             String toFrom = "";
             System.out.println("---------------------------------------------------------------------------------------");
-            System.out.format("%-10s \n","Transfers");
-            System.out.format("%-10s %-10s %-10s \n", "ID", "From/To","Amount");
-            for (int i = 0; i < transferArray.length; i++) {
-                if(transferArray[i].getAcctFrom() == getAccount(Math.toIntExact((currentUser.getUser().getId()))).getAcct_id() ){
-                    toFrom = "From: " + getUsername(transferArray[i].getAcctTo());
-                } else {
-                    toFrom = "To:   " + getUsername(transferArray[i].getAcctFrom());
-
+            if (status == 1) {
+                System.out.format("%-10s \n", "Pending Transfers");
+                System.out.format("%-10s %-10s %-10s \n", "ID", "To", "Amount");
+                for (int i = 0; i < transferArray.length; i++) {
+                    if (transferArray[i].getStatus() == status && transferArray[i].getType() == 1) {
+                        if (transferArray[i].getAcctTo() != getAccount(Math.toIntExact((currentUser.getUser().getId()))).getAcct_id()) {
+                            toFrom = getUsername(transferArray[i].getAcctTo());
+                            System.out.printf("%-10s %-10s $%-10.2f \n", transferArray[i].getId(), toFrom, transferArray[i].getAmount());
+                            selectedTransfers.add(transferArray[i]);
+                        }
+                    }
                 }
-                System.out.printf("%-10s %-10s $%-10.2f \n", transferArray[i].getId(),toFrom,transferArray[i].getAmount());
+            } else if (status == 2) {
+                System.out.format("%-10s \n", "Transfers");
+                System.out.format("%-10s %-10s %-10s \n", "ID", "From/To", "Amount");
+                for (int i = 0; i < transferArray.length; i++) {
+                    if (transferArray[i].getStatus() == status) {
+
+                        if (transferArray[i].getAcctFrom() == getAccount(Math.toIntExact((currentUser.getUser().getId()))).getAcct_id()) {
+                            toFrom = "From: " + getUsername(transferArray[i].getAcctTo());
+                        } else {
+                            toFrom = "To:   " + getUsername(transferArray[i].getAcctFrom());
+
+                        }
+                        System.out.printf("%-10s %-10s $%-10.2f \n", transferArray[i].getId(), toFrom, transferArray[i].getAmount());
+                        selectedTransfers.add(transferArray[i]);
+                    }
+                }
             }
             System.out.println("---------------------------------------------------------------------------------------");
-            return transferArray;
+            return selectedTransfers;
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
             return null;
@@ -79,7 +100,7 @@ public class AccountService {
         }
     }
 
-    public String getUsername(int acctId){
+    public String getUsername(int acctId) {
         try {
             ResponseEntity<String> response = restTemplate.exchange(API_BASE_URL + "/user/" + acctId, HttpMethod.GET, makeAuthEntity(), String.class);
             return response.getBody();
@@ -96,11 +117,11 @@ public class AccountService {
             User[] users = response.getBody();
 
             System.out.println("---------------------------------------------------------------------------------------");
-            System.out.format("%-10s \n","Users");
+            System.out.format("%-10s \n", "Users");
             System.out.format("%-10s %-10s \n", "ID", "Name");
             for (int i = 0; i < users.length; i++) {
                 if (!users[i].getUsername().equals(currentUser.getUser().getUsername())) {
-                    System.out.format("%-10s %-10s \n", users[i].getId(),users[i].getUsername());
+                    System.out.format("%-10s %-10s \n", users[i].getId(), users[i].getUsername());
                 }
             }
             System.out.println("---------------------------------------------------------------------------------------");
@@ -113,24 +134,27 @@ public class AccountService {
     }
 
 
-
     public Transfer sendTransfer(Transfer transfer) {
-
         try {
-
             Transfer returnedTransfer = restTemplate.postForObject(API_BASE_URL + "transfer", makeAuthEntity(transfer), Transfer.class);
-
             System.out.println("Success! :)");
             return returnedTransfer;
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
             System.out.println("There was an error :(");
         }
-            return null;
+        return null;
     }
 
-
-
+    public void sendApprovalTransfer(Transfer transfer) {
+        try {
+           HttpEntity<Transfer> returnedTransfer = restTemplate.exchange(API_BASE_URL + "approval", HttpMethod.PUT,makeAuthEntity(transfer), Transfer.class);
+            System.out.println("Success! :)");
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            BasicLogger.log(e.getMessage());
+            System.out.println("There was an error :(");
+        }
+    }
 
 
     private HttpEntity<Void> makeAuthEntity() {
@@ -146,12 +170,13 @@ public class AccountService {
         return new HttpEntity<>(transfer, headers);
 
     }
+
     //TODO: Should add transfer status and type strings to transfer model
     public void printTransactionDetails(Transfer transfer) {
-        String[] types = new String[] {"Request","Send"};
-        String[] statuses = new String[] {"Pending","Approved","Rejected"};
-        String type = types[transfer.getType()-1];
-        String status = statuses[transfer.getStatus()-1];
+        String[] types = new String[]{"Request", "Send"};
+        String[] statuses = new String[]{"Pending", "Approved", "Rejected"};
+        String type = types[transfer.getType() - 1];
+        String status = statuses[transfer.getStatus() - 1];
 
         System.out.println("---------------------------------------------------------------------------------------");
         System.out.format("%-10s \n", "Transfer Details");
@@ -165,9 +190,6 @@ public class AccountService {
                 transfer.getAmount());
         System.out.println("---------------------------------------------------------------------------------------");
     }
-
-
-
 
 
 }

@@ -83,8 +83,18 @@ public class UserController {
     @RequestMapping(path = "/transfer", method = RequestMethod.POST)
     public Transfer addTransfer(@Valid @RequestBody Transfer transfer) throws TransferToSelfException, TransferAmountInvalidException, NotEnoughFundsException {
         Transfer transfered = jdbcUserDao.transfer(transfer);
-        jdbcUserDao.balanceTransfer(transfered);
+        if(transfered.getStatus() == 2){
+            jdbcUserDao.balanceTransfer(transfered);
+        }
         return transfered;
+    }
+
+    @RequestMapping(path = "/approval", method = RequestMethod.PUT)
+    public void approvalTransfer(@Valid @RequestBody Transfer transfer) {
+        boolean success = jdbcUserDao.updateTransfer(transfer);
+        if(success && transfer.getStatus() == 2){
+            jdbcUserDao.balanceTransfer(transfer);
+        }
     }
 
 

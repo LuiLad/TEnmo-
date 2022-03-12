@@ -6,6 +6,7 @@ import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class App {
 
@@ -29,6 +30,7 @@ public class App {
             mainMenu();
         }
     }
+
     private void loginMenu() {
         int menuSelection = -1;
         while (menuSelection != 0 && currentUser == null) {
@@ -89,19 +91,17 @@ public class App {
         }
     }
 
-	private void viewCurrentBalance() {
+    private void viewCurrentBalance() {
         accountService.getCurrentBalance();
-	}
+    }
 
-	private void viewTransferHistory() {
-
-
+    private void viewTransferHistory() {
         int idSelection = -1;
         while (idSelection != 0) {
-            Transfer[] transferHistory = accountService.getTransferHistory();
+            List<Transfer> transferHistory = accountService.listTransfers(2);
             idSelection = consoleService.promptForInt("Select transfer ID for details (0 to cancel): ");
-            for(Transfer transfer: transferHistory){
-                if(transfer.getId() == idSelection){
+            for (Transfer transfer : transferHistory) {
+                if (transfer.getId() == idSelection) {
                     accountService.printTransactionDetails(transfer);
                 }
             }
@@ -110,12 +110,35 @@ public class App {
 
     }
 
-	private void viewPendingRequests() {
-		// TODO Auto-generated method stub
-		
-	}
+    private void viewPendingRequests() {
+        int idSelection = -1;
+        int menuSelection = -1;
+        while (idSelection != 0) {
+            List<Transfer> transferHistory = accountService.listTransfers(1);
+            idSelection = consoleService.promptForInt("Select transfer ID for details (0 to cancel): ");
+            for (Transfer transfer : transferHistory) {
+                if (transfer.getId() == idSelection) {
+                    accountService.printTransactionDetails(transfer);
+                    consoleService.printApprovalMenu();
+                    menuSelection = consoleService.promptForInt("Please choose an option: ");
+                    if (menuSelection == 1) {
+                        transfer.setStatus(2);
 
-	private void sendBucks() {
+                        accountService.sendApprovalTransfer(transfer);
+                    } else if (menuSelection == 2) {
+                        transfer.setStatus(3);
+                        accountService.sendApprovalTransfer(transfer);
+                    } else if (menuSelection == 0) {
+                        break;
+                    }
+                }
+            }
+            consoleService.pause();
+        }
+
+    }
+
+    private void sendBucks() {
         int idSelection = -1;
         int fromUserId = Math.toIntExact((currentUser.getUser().getId()));
         Account fromUserAcct = accountService.getAccount(fromUserId);
@@ -127,16 +150,33 @@ public class App {
                 if (user.getId() == idSelection) {
                     Account toUserAcct = accountService.getAccount(idSelection);
                     BigDecimal requestAmt = consoleService.promptForBigDecimal("Enter Amount: ");
-                    Transfer newTransfer = new Transfer(2,2,fromUserAcct.getAcct_id(),toUserAcct.getAcct_id(),requestAmt);
+                    Transfer newTransfer = new Transfer(2, 2, fromUserAcct.getAcct_id(), toUserAcct.getAcct_id(), requestAmt);
                     accountService.sendTransfer(newTransfer);
                 }
             }
-        } consoleService.pause();
+        }
+        consoleService.pause();
     }
 
-	private void requestBucks() {
-		// TODO Auto-generated method stub
-		
-	}
+    private void requestBucks() {
+        int idSelection = -1;
+        int fromUserId = Math.toIntExact((currentUser.getUser().getId()));
+        Account fromUserAcct = accountService.getAccount(fromUserId);
+
+        while (idSelection != 0) {
+            User[] users = accountService.listUsers();
+            idSelection = consoleService.promptForInt("Enter ID of user you are requesting from (0 to cancel): ");
+            for (User user : users) {
+                if (user.getId() == idSelection) {
+                    Account toUserAcct = accountService.getAccount(idSelection);
+                    BigDecimal requestAmt = consoleService.promptForBigDecimal("Enter Amount: ");
+                    Transfer newTransfer = new Transfer(1, 1, fromUserAcct.getAcct_id(), toUserAcct.getAcct_id(), requestAmt);
+                    accountService.sendTransfer(newTransfer);
+                }
+            }
+        }
+        consoleService.pause();
+
+    }
 
 }

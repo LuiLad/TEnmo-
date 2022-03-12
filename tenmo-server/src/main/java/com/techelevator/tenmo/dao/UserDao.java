@@ -23,6 +23,9 @@ public interface UserDao {
 
     Transfer transfer(Transfer transfer) throws TransferToSelfException, TransferAmountInvalidException, NotEnoughFundsException;
 
+    boolean updateTransfer(Transfer transfer);
+
+
  //  boolean postTransfer(Transfer transfer);
 
 
